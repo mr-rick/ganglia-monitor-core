@@ -1,0 +1,47 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ganglia-gmetad
+  namespace: kube-system
+  labels:
+    app: ganglia-gmetad
+spec:
+  selector:
+    matchLabels:
+      name: ganglia-gmetad
+  replicas: 1
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        name: ganglia-gmetad
+    spec:    
+      hostNetwork: true
+      initContainers:
+      - name: ganglia-init
+        image: alpine
+        imagePullPolicy: Always
+        command: ['sh', '-c', 'mkdir -p /var/lib/ganglia/rrds && chown nobody /var/lib/ganglia/rrds']
+        volumeMounts:
+        - mountPath: /var/lib/ganglia
+          name: ganglia-data
+          readOnly: false
+      containers:
+      - name: ganglia-gmetad
+        image: mrrick/ganglia-monitor-core:debian-master
+        command: ["gmetad"]
+        args: ["-d","1"]
+        volumeMounts:
+        - mountPath: /var/lib/ganglia/
+          name: ganglia-data
+          readOnly: false
+      - name: ganglia-web
+        image: mrrick/ganglia-web:3.7.4-php7-apache
+        volumeMounts:
+        - mountPath: /var/lib/ganglia/
+          name: ganglia-data
+          readOnly: false
+      volumes:
+      - name: ganglia-data
+        emptyDir: {}

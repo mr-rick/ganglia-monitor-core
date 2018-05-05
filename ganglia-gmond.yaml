@@ -1,0 +1,41 @@
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: ganglia-gmond
+  namespace: kube-system
+  labels:
+    app: ganglia-gmond
+spec:
+  selector:
+    matchLabels:
+      name: ganglia-gmond
+  template:
+    metadata:
+      labels:
+        name: ganglia-gmond
+    spec:    
+      hostNetwork: true
+      hostIPC: true
+      hostPID: true
+      containers:
+      - name: ganglia-gmond
+        image: mrrick/ganglia-monitor-core:debian-master
+        command: ["gmond"]
+        args: ["-d","1"]
+        volumeMounts:
+        - mountPath: /host/proc
+          name: proc
+          readOnly: false
+        - mountPath: /host/sys
+          name: sys
+          readOnly: false
+        securityContext:
+          privileged: true
+          allowPrivilegeEscalation: true
+      volumes:
+      - hostPath:
+          path: /proc
+        name: proc
+      - hostPath:
+          path: /sys
+        name: sys

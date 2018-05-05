@@ -1,0 +1,29 @@
+FROM debian:7
+WORKDIR /tmp
+RUN apt-get update
+RUN apt-get install -y \
+       build-essential libtool automake git pkg-config
+COPY monitor-core-3.7.2.tar.gz /tmp/
+RUN tar -xzf monitor-core-3.7.2.tar.gz
+WORKDIR /tmp/monitor-core-3.7.2
+RUN ./bootstrap
+
+FROM debian:latest
+RUN apt-get update
+RUN apt-get install -y \
+     build-essential automake autoconf pkg-config gperf libtool rrdtool \
+     librrd-dev libconfuse-dev libapr1-dev libpcre3-dev libexpat1-dev python \
+     systemd zlib1g-dev
+COPY --from=0 /tmp/monitor-core-3.7.2/ /tmp/monitor-core-3.7.2/
+WORKDIR /tmp/monitor-core-3.7.2
+RUN ./configure --prefix=/usr --sysconfdir=/etc/ganglia  --enable-python --enable-status  --with-gmetad --with-python=/usr/bin/python --enable-gexec
+RUN make
+RUN make install
+RUN /usr/sbin/gmond -t > /etc/ganglia/gmond.conf
+RUN mkdir -p /var/lib/ganglia/rrds && chown nobody /var/lib/ganglia/rrds
+WORKDIR /
+RUN rm -rf /tmp/monitor-core-3.7.2
+RUN apt-get remove -y build-essential automake autoconf pkg-config gperf libtool
+RUN apt-get clean autoclean && \
+    apt-get autoremove --yes && \
+    rm -rf /var/lib/{apt,dpkg,cache,log}/

@@ -10,14 +10,11 @@ spec:
     matchLabels:
       name: ganglia-gmetad
   replicas: 1
-  strategy:
-    type: Recreate
   template:
     metadata:
       labels:
         name: ganglia-gmetad
     spec:    
-      hostNetwork: true
       initContainers:
       - name: ganglia-init
         image: alpine
@@ -29,9 +26,8 @@ spec:
           readOnly: false
       containers:
       - name: ganglia-gmetad
-        image: mrrick/ganglia-monitor-core:debian-master
-        command: ["gmetad"]
-        args: ["-d","1"]
+        image: mrrick/ganglia-monitor-core:debian-3.7.2
+        command: ["/gmetad-entrypoint.sh"]
         volumeMounts:
         - mountPath: /var/lib/ganglia/
           name: ganglia-data

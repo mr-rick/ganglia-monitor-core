@@ -4,6 +4,36 @@ metadata:
   name: ganglia
 ---
 apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: ganglia
+  namespace: ganglia
+---
+kind: Role
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: ganglia
+  namespace: ganglia
+rules:
+- apiGroups: ["*"]
+  verbs: ["*"]
+  resources: ["*"]
+---
+kind: RoleBinding
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name:  ganglia
+  namespace: ganglia
+subjects:
+  - kind: ServiceAccount
+    name: ganglia
+    namespace: ganglia
+roleRef:
+  kind: Role
+  name: ganglia
+  apiGroup: rbac.authorization.k8s.io
+---
+apiVersion: v1
 kind: Service
 metadata:
   name: ganglia-gmond-infra
@@ -39,6 +69,7 @@ spec:
       labels:
         name: ganglia-gmond
     spec:    
+      serviceAccount: ganglia
       hostNetwork: true
       hostIPC: true
       hostPID: true

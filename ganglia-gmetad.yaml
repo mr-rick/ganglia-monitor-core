@@ -2,7 +2,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: ganglia-gmetad
-  namespace: kube-system
+  namespace: ganglia
   labels:
     app: ganglia-gmetad
 spec:
@@ -15,6 +15,7 @@ spec:
       labels:
         name: ganglia-gmetad
     spec:    
+      serviceAccount: ganglia
       initContainers:
       - name: ganglia-init
         image: alpine

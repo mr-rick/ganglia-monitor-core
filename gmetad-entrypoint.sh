@@ -14,11 +14,13 @@ do
       fi
     done;
   unset IFS
-  read -r NAMESPACE KUBE_SERVICE <<< `kubectl get services --all-namespaces -l "ganglia/role=$NODE_ROLE" | grep $NODE_ROLE | head -n1 | awk '{ print $1,$2}' `
-  GANGLIA_GMOND_UNICAST_HOST=$(kubectl describe service $KUBE_SERVICE -n $NAMESPACE | grep Endpoints | head -n1 | awk '{print $2}' | tr ',' '\n' | sort -n | cut -d ':' -f1)
+  #read -r NAMESPACE KUBE_SERVICE <<< `kubectl get services --all-namespaces -l "ganglia/role=$NODE_ROLE" | grep $NODE_ROLE | head -n1 | awk '{ print $1,$2}' `
+  #GANGLIA_GMOND_UNICAST_HOST=$(kubectl describe service $KUBE_SERVICE -n $NAMESPACE | grep Endpoints | head -n1 | awk '{print $2}' | tr ',' '\n' | sort -n | cut -d ':' -f1)
+  GANGLIA_GMOND_UNICAST_HOST=$(kubectl get nodes -l ganglia/role=$NODE_ROLE -o jsonpath='{.items[*].status.addresses[?(@.type=="InternalIP")].address}' | tr ' ' '\n' | sort -n | head -n1)
   [[ -z $GANGLIA_GMOND_UNICAST_HOST  ]] && GANGLIA_GMOND_UNICAST_HOST=$KUBE_NODE
   GMETAD_SOURCES[$NODE_ROLE]=$GANGLIA_GMOND_UNICAST_HOST
 done < <(kubectl get nodes --show-labels | grep -v NAME | awk '{ print $1,$6 }')
+
 
 echo "" > /etc/ganglia/gmetad.conf
 for GMETAD_KEY in "${!GMETAD_SOURCES[@]}"
